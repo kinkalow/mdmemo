@@ -19,14 +19,14 @@ class AppConfig:
     DEFAULT_ACTION: str = "view"
     VIEW_COMMAND: str = 'bat --style plain --language markdown'
     FZF_OPTS: list[str] = field(default_factory=lambda: ["--multi", "--height=50%"])
-    FZF_KEYS: dict[str, dict[str, str]] = field(default_factory=lambda: {
+    FZF_KEYS: dict[str, dict[str, str]] = field(default_factory=lambda: {  # fmt: off
       "edit"  : {"tab": "mark", "enter": "edit"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
       "jump"  : {"tab": "mark", "enter": "jump"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
       "list"  : {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
       "remove": {"tab": "mark", "enter": "remove", "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
       "search": {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
       "view"  : {"tab": "mark", "enter": "view"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-    })
+    })  # fmt: on
 
     def __post_init__(self) -> None:
         self.FZF_KEYS["list"]["enter"] = self.DEFAULT_ACTION
@@ -74,7 +74,7 @@ class FZFRunner:
         help_items = []
         for k, v in action_map.items():
             if v == "remove" and not self.cfg.ENABLE_REMOVE: continue
-            lbl = k.lower().replace("ctrl", "c").replace("alt", "a")
+            lbl = k.lower().replace("ctrl", "c").replace("alt", "m")
             help_items.append(f"{lbl}:{v.capitalize()}")
         header_text = f"{header}  {'  '.join(help_items)}"
 
@@ -281,13 +281,22 @@ def resolve_args(args: list[str]):
     return target, action_name
 
 def main():
+
     if os.getenv("MDMEMO_COMPLETION") == "1":
-        cur = os.getenv("MDMEMO_COMP_WORD", "")
+        cur_input = os.getenv("MDMEMO_COMP_WORD", "")
+        cur_path = Path(cur_input)
         all_files = act._get_all_files_sorted()
-        candidates = {f.stem for f in all_files}
-        candidates.update(str(f.relative_to(cfg.MDMEMO_ROOT).with_suffix("")) for f in all_files)
-        filtered = [item for item in candidates if item.startswith(cur)]
-        for item in sorted(filtered):
+        candidates = set() if os.sep in cur_input else {f.stem for f in all_files if f.stem.startswith(cur_input)}
+        for f in all_files:
+            rel_path = f.relative_to(cfg.MDMEMO_ROOT).with_suffix("")
+            if rel_path.as_posix().startswith(cur_path.as_posix()):
+                f_parts = rel_path.parts
+                cur_depth = len(cur_path.parts)
+                if len(f_parts) > cur_depth + 1:
+                    candidates.add(str(Path(*f_parts[:cur_depth + 1])) + os.sep)
+                else:
+                    candidates.add(str(rel_path))
+        for item in sorted(candidates):
             print(item)
         return
 
