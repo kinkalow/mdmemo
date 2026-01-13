@@ -282,8 +282,13 @@ def resolve_args(args: list[str]):
 
 def main():
     if os.getenv("MDMEMO_COMPLETION") == "1":
-        for f in act._get_all_files_sorted():
-            print(f.relative_to(cfg.MDMEMO_ROOT).with_suffix(""))
+        cur = os.getenv("MDMEMO_COMP_WORD", "")
+        all_files = act._get_all_files_sorted()
+        candidates = {f.stem for f in all_files}
+        candidates.update(str(f.relative_to(cfg.MDMEMO_ROOT).with_suffix("")) for f in all_files)
+        filtered = [item for item in candidates if item.startswith(cur)]
+        for item in sorted(filtered):
+            print(item)
         return
 
     target, action_name = resolve_args(sys.argv[1:])

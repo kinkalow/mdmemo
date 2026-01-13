@@ -24,26 +24,30 @@ mkdir -p "$SHARE_DIR" "$BIN_DIR" "$COMP_DIR"
 cp mdmemo.py "$SHARE_DIR/mdmemo.py"
 cp config.py "$SHARE_DIR/config.py"
 
+# --- MdMemo command wrapper ---
 cat << EOF > "$BIN_DIR/$CMD"
 #!/bin/bash
 python3 "$SHARE_DIR/mdmemo.py" "\$@"
 EOF
 chmod +x "$BIN_DIR/$CMD"
 
+# --- Zsh completion ---
 cat << EOF > "$COMP_DIR/_$CMD"
 #compdef $CMD
 _$CMD() {
   local MDMEMO_PATH="$SHARE_DIR/mdmemo.py"
-  local -a files actions
+  local cur="\${words[CURRENT]}"
   if (( CURRENT == 2 )); then
-    files=(\${(f)"\$(MDMEMO_COMPLETION=1 python3 "\$MDMEMO_PATH")"})
+    local -a files
+    files=(\${(f)"\$(MDMEMO_COMPLETION=1 MDMEMO_COMP_WORD="\$cur" python3 "\$MDMEMO_PATH")"})
     _describe 'memos' files
   elif (( CURRENT == 3 )); then
+    local -a actions
     actions=(
-      'conifg:Edit configuration file'
+      'config:Edit configuration file'
       'edit:Open in editor'
-      'jump:jump to a memo'
-      'list:List all memos'
+      'jump:Jump to a memo directory'
+      'list:List memos'
       'remove:Remove memo'
       'search:Search inside files'
       'view:View markdown'
@@ -53,6 +57,7 @@ _$CMD() {
 }
 EOF
 
+# --- Bash completion ---
 cat << EOF > "$COMP_DIR/mdmemo.bash"
 _${CMD}_completion() {
   local cur MDMEMO_PATH
@@ -60,8 +65,8 @@ _${CMD}_completion() {
   COMPREPLY=()
   cur="\${COMP_WORDS[COMP_CWORD]}"
   if [ "\$COMP_CWORD" -eq 1 ]; then
-    local files=\$(MDMEMO_COMPLETION=1 python3 "\$MDMEMO_PATH")
-    COMPREPLY=( \$(compgen -W "\${files}" -- "\$cur") )
+    local files=\$(MDMEMO_COMPLETION=1 MDMEMO_COMP_WORD="\$cur" python3 "\$MDMEMO_PATH")
+    COMPREPLY=( \$files )
   elif [ "\$COMP_CWORD" -eq 2 ]; then
     local actions="config edit jump list remove search view"
     COMPREPLY=( \$(compgen -W "\${actions}" -- "\$cur") )
