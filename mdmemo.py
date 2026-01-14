@@ -10,6 +10,7 @@ from typing import Literal, Optional
 
 # --- Configuration ---
 
+
 @dataclass
 class AppConfig:
     MDMEMO_ROOT: Path = Path.home() / "mdmemo"
@@ -20,17 +21,18 @@ class AppConfig:
     VIEW_COMMAND: str = 'bat --style plain --language markdown'
     FZF_OPTS: list[str] = field(default_factory=lambda: ["--multi", "--height=50%"])
     FZF_KEYS: dict[str, dict[str, str]] = field(default_factory=lambda: {  # fmt: off
-      "edit"  : {"tab": "mark", "enter": "edit"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-      "jump"  : {"tab": "mark", "enter": "jump"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-      "list"  : {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-      "remove": {"tab": "mark", "enter": "remove", "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-      "search": {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
-      "view"  : {"tab": "mark", "enter": "view"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "edit"  : {"tab": "mark", "enter": "edit"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "jump"  : {"tab": "mark", "enter": "jump"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "list"  : {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "remove": {"tab": "mark", "enter": "remove", "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "search": {"tab": "mark", "enter": ""      , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
+        "view"  : {"tab": "mark", "enter": "view"  , "ctrl-e": "edit", "ctrl-j": "jump", "ctrl-r": "remove", "ctrl-v": "view"},  # noqa: E203
     })  # fmt: on
 
     def __post_init__(self) -> None:
         self.FZF_KEYS["list"]["enter"] = self.DEFAULT_ACTION
         self.FZF_KEYS["search"]["enter"] = self.DEFAULT_ACTION
+
 
 cfg = AppConfig()
 
@@ -55,6 +57,7 @@ if cfg.CONFIG_FILE.exists():
             sys.exit(1)
 
 cfg.MDMEMO_ROOT.mkdir(parents=True, exist_ok=True)
+
 
 # --- Core Classes ---
 
@@ -114,6 +117,7 @@ class FZFRunner:
             sys.exit(1)
 
         return None
+
 
 class ActionManager:
     def __init__(self, config: AppConfig, fzf: FZFRunner):
@@ -251,10 +255,12 @@ class ActionManager:
         except subprocess.CalledProcessError:
             print(f"× No match for content: {query}")
 
+
 # --- Initialization ---
 
 fzf = FZFRunner(cfg)
 act = ActionManager(cfg, fzf)
+
 
 # --- Main Logic ---
 
@@ -279,6 +285,7 @@ def resolve_args(args: list[str]):
             sys.exit(1)
 
     return target, action_name
+
 
 def main():
 
@@ -307,6 +314,7 @@ def main():
     elif action_name == "list": act.list(target)
     elif action_name == "search": act.search(target)
     else: act.dispatch_by_action_type(target, action_name)
+
 
 if __name__ == "__main__":
     main()
