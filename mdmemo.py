@@ -72,7 +72,8 @@ class FZFRunner:
 
         display_map = {str(p.relative_to(self.cfg.MDMEMO_ROOT)): p for p in paths}
         action_map = self.cfg.FZF_KEYS[current_action]
-        expect_keys = [k for k in action_map.keys() if k != "enter" and k != "tab"]
+        mark_keys = [k for k, v in action_map.items() if v == "mark"]
+        expect_keys = [k for k in action_map.keys() if k not in mark_keys]
 
         help_items = []
         for k, v in action_map.items():
@@ -91,20 +92,21 @@ class FZFRunner:
             process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             stdout, stderr = process.communicate(input="\n".join(display_map.keys()))
 
-            if process.returncode not in (0, 130):
+            if process.returncode in (1, 130): return None  # No match and Cancel
+            elif process.returncode != 0:
                 print(f"Error: fzf exited with return code {process.returncode}")
                 if stderr: print(f"Details: {stderr.strip()}")
-                print("Please check your FZF_OPTS and FZF_KEYS in config.py")
+                if process.returncode == 2:
+                    print("Please check your FZF_OPTS and FZF_KEYS in config.py")
                 sys.exit(1)
 
-            if process.returncode == 130: return None  # Cancel
             lines = stdout.splitlines()
-            if not lines: return None
+            if len(lines) <= 1: return None
+            key = lines[0].strip()
+            if key == "": return None
+            selected = lines[1:]
 
-            key = lines[0].strip() or "enter" if expect_keys else "enter"
-            selected = lines[1:] if expect_keys else lines
             targets = [display_map[item] for item in selected if item in display_map]
-
             action_to_do = action_map.get(key)
             if action_to_do:
                 return action_to_do, targets
