@@ -20,7 +20,7 @@ It enables quick file selection through **[fzf](https://github.com/junegunn/fzf)
 
 * **Python 3.9+**
 * **[fzf](https://github.com/junegunn/fzf)**
-* **Markdown Viewer** (Default: [bat](https://github.com/sharkdp/bat). Supports any tool like [glow](https://github.com/charmbracelet/glow) or [rich-cli](https://github.com/Textualize/rich-cli))
+* **Markdown Viewer** (Default: [bat](https://github.com/sharkdp/bat). Supports any tool like [glow](https://github.com/charmbracelet/glow), [rich-cli](https://github.com/Textualize/rich-cli), or simply standard `less`/`cat`)
 
 
 ## Installation
