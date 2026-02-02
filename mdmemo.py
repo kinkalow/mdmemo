@@ -14,7 +14,7 @@ from typing import Literal, Optional
 @dataclass
 class AppConfig:
     MDMEMO_ROOT: Path = Path.home() / "mdmemo"
-    CONFIG_FILE: Path = Path(__file__).parent / "config.py"
+    CONFIG_PATH: Path = Path(__file__).parent / "config.py"
     EDITOR_COMMAND: str = "vim -c 'cd %:p:h'"
     ENABLE_REMOVE: bool = False
     DEFAULT_ACTION: str = "view"
@@ -30,14 +30,22 @@ class AppConfig:
     })  # fmt: on
 
     def __post_init__(self) -> None:
+        env_config = os.environ.get("MDMEMO_CONFIG")
+        if env_config:
+            config_path = Path(env_config).expanduser().resolve()
+            if config_path.exists() and config_path.is_file():
+                self.CONFIG_PATH = config_path
+            else:
+                print(f"Error: Config file not found at '{config_path}'.")
+                exit(1)
         self.FZF_KEYS["list"]["enter"] = self.DEFAULT_ACTION
         self.FZF_KEYS["search"]["enter"] = self.DEFAULT_ACTION
 
 
 cfg = AppConfig()
 
-if cfg.CONFIG_FILE.exists():
-    spec = importlib.util.spec_from_file_location("mdmemo_config", cfg.CONFIG_FILE)
+if cfg.CONFIG_PATH.exists():
+    spec = importlib.util.spec_from_file_location("mdmemo_config", cfg.CONFIG_PATH)
     if spec and spec.loader:
         user_conf = importlib.util.module_from_spec(spec)
         try:
@@ -160,7 +168,7 @@ class ActionManager:
             sys.exit(1)
 
     def config_edit(self):
-        self._run_editor([cfg.CONFIG_FILE])
+        self._run_editor([cfg.CONFIG_PATH])
 
     def new(self, name: str):
         path = self.cfg.MDMEMO_ROOT / self._ensure_md(name)
